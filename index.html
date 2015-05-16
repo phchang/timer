@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv='Content-type' content='text/html; charset=utf-8'>
+    <title>Timer</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" />
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.8.0/lodash.min.js"></script>
+
+    <style type="text/css">
+      
+
+    </style>
+  </head>
+  <body>
+    <div id="container">
+    </div>
+    
+    <script src="js/react.js"></script>
+    <script src="js/JSXTransformer.js"></script>
+
+    <script type="text/jsx">
+      var Timer = React.createClass({
+
+        getInitialState: function() {
+          return {
+            startTime: null,
+            interval: null,
+            time: 0,
+            lapTimes: []
+          }
+        },
+
+        componentDidMount: function() {
+        },
+
+        onStart: function() {
+
+          // start
+          if (this.state.startTime) {
+          console.log('here');
+            clearInterval(this.state.interval);
+            this.setState({startTime: null, interval: null});
+            return;
+          }
+
+          console.log('there');
+          this.setState({startTime: new Date().getTime()});
+
+          var interval = setInterval(function() {
+            var millis = new Date().getTime() - this.state.startTime;
+            this.setState({time: millis});
+          }.bind(this), 50);
+
+          this.setState({interval: interval});
+        },
+
+        onLap: function() {
+          var lapTimes = this.state.lapTimes.slice();
+
+          var endTime = new Date().getTime();
+          var startTime = lapTimes.length > 0 ? _.last(lapTimes).end : this.state.startTime;
+
+          lapTimes.push({start: startTime, end: endTime, displayTime: this.calculateTime(startTime, endTime)});
+          this.setState({lapTimes: lapTimes});
+
+        },
+
+        calculateTime: function(startTime, endTime) {
+
+          millis = endTime - startTime;
+          seconds = Math.round(millis / 1000);
+          minutes = Math.floor(seconds / 60);
+
+          displaySeconds = seconds - (minutes * 60);
+
+          return [minutes, displaySeconds];
+        },
+
+        pad: function(num) {
+          return  num < 10 ? '0' + num : num;
+        },
+
+        render: function() {
+          
+          var millis = 0;
+          var seconds = 0;
+          var minutes = 0;
+          var displaySeconds = 0;
+          var displayMinutes = 0;
+          var startStop = null;
+
+          if (this.state.startTime) {
+
+            var timeRef = this.state.startTime;
+
+            if (this.state.lapTimes.length > 0) {
+              timeRef = _.last(this.state.lapTimes).end;
+            }
+
+            var time = this.calculateTime(timeRef, new Date().getTime());
+
+            seconds = time[1];
+            minutes = time[0];
+
+            startStop = 'Stop';
+          } else {
+            startStop = 'Start';
+          }
+
+          return (
+            <div>
+              <p>{ this.pad(minutes) } : { this.pad(seconds) }</p>
+
+              <button onClick={this.onStart}>{startStop}</button>
+              <button onClick={this.onLap}>Lap</button>
+
+              {_.map(this.state.lapTimes, function(elem) {
+                console.log('this = ', this);
+                return (
+                  <div>{this.pad(elem.displayTime[0])} : {this.pad(elem.displayTime[1])}</div>
+                );
+              }, this)}
+              <div>
+              </div>
+            </div>
+          );
+        }
+      });
+      
+        React.render(
+          <Timer />,
+          document.getElementById('container')
+        );
+    </script>
+  </body>
+</html>
