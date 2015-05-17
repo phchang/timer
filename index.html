@@ -7,18 +7,93 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.8.0/lodash.min.js"></script>
 
     <style type="text/css">
-      
+
+      html, body {
+        background-color: #000;
+        color: #FFF;
+        font-family: Helvetica Neue, sans-serif;
+      }
+
+      div.container {
+        margin-top: 100px;
+      }
+
+      div.time-panel, div.button-panel {
+        text-align: center;
+      }
+
+      div.time-panel {
+        font-size: 4em;
+        font-weight: 100;
+      }
+
+      .btn-circle {
+        width: 60px;
+        height: 60px;
+        text-align: center;
+        padding: 12px 0;
+        font-size: 18px;
+        line-height: 2.00;
+        border-radius: 30px;
+      }
+
+      .btn-start, .btn-start:focus, .btn-start:active, .btn-start:hover {
+        background-color: #4CD964;
+        border-color: #4CD964;
+        color: #FFF;
+      }
+
+      .btn-stop, .btn-stop:focus, .btn-stop:active, .btn-stop:hover {
+        background-color: #FF3A2D;
+        border-color: #FF3A2D;
+        color: #FFF;
+      }
+
+      .btn-lap {
+        background-color: #000;
+        color: #FFF;
+        border-width: 2px;
+      }
 
     </style>
   </head>
   <body>
     <div id="container">
+
     </div>
+
+    <script>
+      (function(d) {
+        var config = {
+          kitId: 'mpi1apy',
+          scriptTimeout: 3000
+        },
+        h=d.documentElement,t=setTimeout(function(){h.className=h.className.replace(/\bwf-loading\b/g,"")+" wf-inactive";},config.scriptTimeout),tk=d.createElement("script"),f=false,s=d.getElementsByTagName("script")[0],a;h.className+=" wf-loading";tk.src='//use.typekit.net/'+config.kitId+'.js';tk.async=true;tk.onload=tk.onreadystatechange=function(){a=this.readyState;if(f||a&&a!="complete"&&a!="loaded")return;f=true;clearTimeout(t);try{Typekit.load(config)}catch(e){}};s.parentNode.insertBefore(tk,s)
+      })(document);
+    </script>
     
     <script src="js/react.js"></script>
     <script src="js/JSXTransformer.js"></script>
 
     <script type="text/jsx">
+
+      var StopButton = React.createClass({
+
+        render: function() {
+          return (
+            <a className="btn btn-default btn-circle btn-stop" onClick={this.props.onClick}>Stop</a>
+          );
+        }
+      });
+
+      var StartButton = React.createClass({
+
+        render: function() {
+          return (
+            <a className="btn btn-default btn-circle btn-start" onClick={this.props.onClick}>Start</a>
+          );
+        }
+      });
       var Timer = React.createClass({
 
         getInitialState: function() {
@@ -26,25 +101,22 @@
             startTime: null,
             interval: null,
             time: 0,
-            lapTimes: []
+            lapTimes: [],
+            isActive: false
           }
-        },
-
-        componentDidMount: function() {
         },
 
         onStart: function() {
 
-          // start
-          if (this.state.startTime) {
-          console.log('here');
+          // stop
+          if (this.state.isActive) {
             clearInterval(this.state.interval);
-            this.setState({startTime: null, interval: null});
+            this.setState({startTime: null, interval: null, isActive: false});
             return;
           }
 
-          console.log('there');
-          this.setState({startTime: new Date().getTime()});
+          // start
+          this.setState({startTime: new Date().getTime(), isActive: true});
 
           var interval = setInterval(function() {
             var millis = new Date().getTime() - this.state.startTime;
@@ -62,7 +134,6 @@
 
           lapTimes.push({start: startTime, end: endTime, displayTime: this.calculateTime(startTime, endTime)});
           this.setState({lapTimes: lapTimes});
-
         },
 
         calculateTime: function(startTime, endTime) {
@@ -88,6 +159,7 @@
           var displaySeconds = 0;
           var displayMinutes = 0;
           var startStop = null;
+          var startStopButton = null;
 
           if (this.state.startTime) {
 
@@ -103,25 +175,38 @@
             minutes = time[0];
 
             startStop = 'Stop';
+            startStopButton = <StopButton onClick={this.onStart} />;
+
           } else {
             startStop = 'Start';
+            startStopButton = <StartButton onClick={this.onStart} />;
           }
 
           return (
-            <div>
-              <p>{ this.pad(minutes) } : { this.pad(seconds) }</p>
+            <div className="container">
+              <div className="row">
+                <div className="col-md-4 col-md-offset-4">
+                  <div className="time-panel">{ this.pad(minutes) } : { this.pad(seconds) }</div>
+                  <div className="button-panel">
+                    {startStopButton}&nbsp;
+                    <a className="btn btn-default btn-circle btn-lap" onClick={this.onLap}>Lap</a>
+                  </div>
+                </div>
+              </div>
 
-              <button onClick={this.onStart}>{startStop}</button>
-              <button onClick={this.onLap}>Lap</button>
-
-              {_.map(this.state.lapTimes, function(elem) {
-                console.log('this = ', this);
+              {_.map(this.state.lapTimes, function(elem, n) {
                 return (
-                  <div>{this.pad(elem.displayTime[0])} : {this.pad(elem.displayTime[1])}</div>
+                  <div className="row">
+                    <div className="col-md-1 col-md-offset-5">
+                      <div>{n+1}</div>
+                    </div>
+                    <div className="col-md-1">
+                      <div>{this.pad(elem.displayTime[0])} : {this.pad(elem.displayTime[1])}</div>
+                    </div>
+                  </div>
                 );
               }, this)}
-              <div>
-              </div>
+
             </div>
           );
         }
